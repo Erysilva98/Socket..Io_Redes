@@ -25,13 +25,29 @@ app.get('/messages', (req, res) => {
     res.json([]);
 });
 
+const generateAutoResponse = (msg) => {
+    if (msg.includes('Olá')) {
+        return 'Olá! Como posso ajudar você hoje?';
+    } else if (msg.includes('Como você está?')) {
+        return 'Estou apenas um código, mas estou funcionando perfeitamente!';
+    } else {
+        return 'Desculpe, não entendi sua pergunta. Pode reformular?';
+    }
+};
+
 io.on('connection', (socket) => {
     console.log(`New client connected: ${socket.id}`);
     clients.push({ id: socket.id, name: `Client ${clients.length + 1}`, message: '' });
 
     socket.on('message', (msg) => {
-        io.emit('message', msg);
+        const clientMessage = { id: socket.id, name: `Você`, message: msg };
+        io.emit('message', clientMessage);
         clients = clients.map((client) => (client.id === socket.id ? { ...client, message: msg } : client));
+
+        const serverResponse = { id: 'server', name: 'Servidor', message: generateAutoResponse(msg) };
+        setTimeout(() => {
+            io.emit('message', serverResponse);
+        }, 1000);
     });
 
     socket.on('disconnect', () => {
