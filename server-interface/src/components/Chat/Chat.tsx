@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import socket from '../../socket';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser } from '@fortawesome/free-solid-svg-icons';
 import './Chat.css';
 
 interface Message {
     id: string;
     name: string;
     message: string;
-    time: string;
 }
 
 const Chat: React.FC = () => {
@@ -31,7 +28,6 @@ const Chat: React.FC = () => {
                 id: socket.id ?? '',
                 name: 'Você',
                 message: message,
-                time: new Date().toLocaleTimeString(),
             };
             socket.emit('message', newMessage);
             setMessage('');
@@ -40,18 +36,12 @@ const Chat: React.FC = () => {
 
     return (
         <div className="chat-container">
-            <div className="chat-header">Chat</div>
+            <div className="chat-header">Servidor</div>
             <div className="chat-messages">
                 {messages.map((msg, index) => (
                     <div key={index} className={`message ${msg.id === socket.id ? 'sent' : 'received'}`}>
                         <div className="message-content">
-                            <div className="avatar">
-                                <FontAwesomeIcon icon={faUser} size="2x" />
-                            </div>
-                            <div className="message-text">
-                                <p>{msg.message}</p>
-                                <span className="message-time">{msg.time}</span>
-                            </div>
+                            <strong>{msg.name}: </strong> {msg.message}
                         </div>
                     </div>
                 ))}
@@ -59,10 +49,10 @@ const Chat: React.FC = () => {
             <div className="chat-input">
                 <input
                     type="text"
-                    placeholder="Escreva sua mensagem..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                    placeholder="Digite sua mensagem..."
                 />
                 <button onClick={sendMessage}>Enviar</button>
             </div>
