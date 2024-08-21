@@ -38,7 +38,7 @@ io.on('connection', (socket) => {
 
     // Evento para o cliente entrar em uma sala específica
     socket.on('join room', (room) => {
-        socket.join(room);  // O cliente entra na sala especificada
+        socket.join(room);
         console.log(`${clients[socket.id].name} joined room: ${room}`);
 
         // Inicializa o histórico da sala se ainda não existir
@@ -50,12 +50,14 @@ io.on('connection', (socket) => {
         socket.emit('chat history', chatRooms[room]);
     });
 
+    // Evento para sair de uma sala
+    socket.on('leave room', (room) => {
+        socket.leave(room);
+        console.log(`${clients[socket.id].name} left room: ${room}`);
+    });
+
     // Quando uma mensagem é recebida de um cliente
     socket.on('message', ({ room, message }) => {
-        if (!room || !message) {
-            return; // Verificação básica para evitar mensagens malformadas
-        }
-
         const msg = {
             id: socket.id,
             name: clients[socket.id].name,
@@ -72,7 +74,7 @@ io.on('connection', (socket) => {
 
         // Enviar a mensagem para todos os clientes na mesma sala
         io.to(room).emit('message', msg);
-        console.log(`Mensagem enviada na sala ${room}: ${JSON.stringify(msg)}`);
+        console.log(`Mensagem enviada para a sala ${room}: ${JSON.stringify(msg)}`);
     });
 
     // Quando um cliente se desconecta

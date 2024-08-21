@@ -13,17 +13,36 @@ interface Message {
 
 const Chat: React.FC = () => {
     const [message, setMessage] = useState<string>('');
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [messages, setMessages] = useState<{ [key: string]: Message[] }>({}); // Armazena mensagens por sala
+    const [room, setRoom] = useState<string>('Room 1'); // Sala atual
 
     useEffect(() => {
-        socket.on('message', (msg: Message) => {
-            setMessages((prevMessages) => [...prevMessages, msg]);
+        // Entrar na sala quando o componente for montado ou quando a sala mudar
+        socket.emit('join room', room);
+
+        // Receber o histórico de mensagens da sala
+        socket.on('chat history', (history: Message[]) => {
+            setMessages((prevMessages) => ({
+                ...prevMessages,
+                [room]: history
+            }));
         });
 
+        // Receber novas mensagens
+        socket.on('message', (msg: Message) => {
+            setMessages((prevMessages) => ({
+                ...prevMessages,
+                [room]: [...(prevMessages[room] || []), msg]
+            }));
+        });
+
+        // Limpar quando o componente for desmontado ou a sala mudar
         return () => {
+            socket.emit('leave room', room); // Sair da sala
+            socket.off('chat history');
             socket.off('message');
         };
-    }, []);
+    }, [room]); // Efeito depende da sala
 
     const sendMessage = () => {
         if (message.trim()) {
@@ -33,16 +52,23 @@ const Chat: React.FC = () => {
                 message: message,
                 time: new Date().toLocaleTimeString(),
             };
-            socket.emit('message', newMessage);
+            socket.emit('message', { ...newMessage, room }); // Enviar mensagem para a sala específica
             setMessage('');
         }
     };
 
     return (
         <div className="chat-container">
-            <div className="chat-header">Chat</div>
+            <div className="chat-header">
+                <select value={room} onChange={(e) => setRoom(e.target.value)}>
+                    <option value="Sala 1">Sala 1</option>
+                    <option value="Sala 2">Sala 2</option>
+                    <option value="Sala 3">Sala 3</option>
+                </select>
+                <span>Chat - {room}</span>
+            </div>
             <div className="chat-messages">
-                {messages.map((msg, index) => (
+                {(messages[room] || []).map((msg, index) => (
                     <div key={index} className={`message ${msg.id === socket.id ? 'sent' : 'received'}`}>
                         <div className="message-content">
                             <div className="avatar">

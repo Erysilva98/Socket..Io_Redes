@@ -8,10 +8,8 @@ const Chat: React.FC = () => {
     const [input, setInput] = useState('');
 
     useEffect(() => {
-        // Conectar ao socket
+        // Conectar e entrar na sala atual
         socket.connect();
-
-        // Entrar na sala atual
         socket.emit('join room', room);
 
         // Receber o histórico de mensagens da sala
@@ -21,23 +19,22 @@ const Chat: React.FC = () => {
 
         // Receber novas mensagens e adicioná-las à lista
         socket.on('message', (message) => {
-            if (message.room === room) {
-                setMessages((prevMessages) => [...prevMessages, message]);
-            }
+            setMessages((prevMessages) => [...prevMessages, message]);
         });
 
-        // Cleanup ao mudar de sala ou desconectar
+        // Desconectar ao sair da sala
         return () => {
-            socket.emit('leave room', room);  // Sair da sala atual
             socket.off('chat history');
             socket.off('message');
+            socket.emit('leave room', room); // O cliente deixa a sala
+            socket.disconnect();
         };
     }, [room]); // Executa o efeito sempre que a sala muda
 
     const sendMessage = () => {
         if (input) {
             const messageData = {
-                room: room, // Certifique-se de que a sala está correta
+                room: room, // Certifica-se de que a sala está correta
                 message: input,
                 name: 'Você', // Nome do remetente
             };
@@ -51,19 +48,19 @@ const Chat: React.FC = () => {
             <div className="chat-sidebar">
                 <h2>Salas de Chat</h2>
                 <ul>
-                    <li className={room === 'Room 1' ? 'active' : ''} onClick={() => setRoom('Room 1')}>
-                        Room 1
+                    <li className={room === 'Sala 1' ? 'active' : ''} onClick={() => setRoom('Sala 1')}>
+                        Sala 1
                     </li>
-                    <li className={room === 'Room 2' ? 'active' : ''} onClick={() => setRoom('Room 2')}>
-                        Room 2
+                    <li className={room === 'Sala 2' ? 'active' : ''} onClick={() => setRoom('Sala 2')}>
+                        Sala 2
                     </li>
-                    <li className={room === 'Room 3' ? 'active' : ''} onClick={() => setRoom('Room 3')}>
-                        Room 3
+                    <li className={room === 'Sala 3' ? 'active' : ''} onClick={() => setRoom('Sala 3')}>
+                        Sala 3
                     </li>
                 </ul>
             </div>
             <div className="chat-main">
-                <div className="chat-header">Chat Room: {room}</div>
+                <div className="chat-header">Chat: {room}</div>
                 <div className="chat-messages">
                     {messages.map((msg, index) => (
                         <div key={index} className={`message ${msg.name === 'Você' ? 'sent' : 'received'}`}>
@@ -83,7 +80,7 @@ const Chat: React.FC = () => {
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Type a message..."
                     />
-                    <button onClick={sendMessage}>Send</button>
+                    <button onClick={sendMessage}>Enviar</button>
                 </div>
             </div>
         </div>
