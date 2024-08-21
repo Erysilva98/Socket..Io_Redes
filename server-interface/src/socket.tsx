@@ -1,6 +1,8 @@
-import { io, Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 
-const SERVER_URL = 'http://10.26.12.100:8000';  // Deve ser o Ip da máquina que está rodando o servidor + port 8000
-const socket: Socket = io(SERVER_URL);
+const URL = 'http://localhost:8000';  // Certifique-se de que a URL esteja correta
+const socket = io(URL, {
+    autoConnect: false,  // Você pode usar autoConnect: true para conectar automaticamente
+});
 
 export default socket;

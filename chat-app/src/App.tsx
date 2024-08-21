@@ -4,9 +4,10 @@ import Chat from './component/Chat/Chat';
 
 const App: React.FC = () => {
   return (
-    <div>
+    <div className="app-container">
       <Chat />
     </div>
   );
 };
+
 export default App;

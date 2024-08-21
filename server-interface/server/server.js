@@ -13,48 +13,95 @@ const io = socketIo(server, {
 });
 
 const PORT = process.env.PORT || 8000;
-let clients = [];
+let clients = {};
+let chatRooms = {};  // Objeto para armazenar mensagens de cada sala
 
 app.use(cors());
 
+// Rota para listar todos os clientes conectados
 app.get('/clients', (req, res) => {
     res.json(clients);
 });
 
-app.get('/messages', (req, res) => {
-    res.json([]);
+// Rota para listar mensagens de uma sala específica
+app.get('/messages/:room', (req, res) => {
+    const room = req.params.room;
+    const messages = chatRooms[room] || [];
+    res.json(messages);
 });
 
 io.on('connection', (socket) => {
     console.log(`New client connected: ${socket.id}`);
-    clients.push({ id: socket.id, name: `Client ${clients.length + 1}`, message: '' });
 
-    // Quando uma mensagem é recebida de um cliente
-    socket.on('message', (msg) => {
-        console.log(`Mensagem recebida de ${socket.id}: ${JSON.stringify(msg)}`);
+    // Adiciona o cliente à lista de clientes conectados
+    clients[socket.id] = { id: socket.id, name: `Client ${Object.keys(clients).length + 1}` };
 
-        // Enviar a mensagem para todos os clientes conectados
-        io.emit('message', msg);
+    // Evento para o cliente entrar em uma sala específica
+    socket.on('join room', (room) => {
+        socket.join(room);
+        console.log(`${clients[socket.id].name} joined room: ${room}`);
+
+        // Inicializa o histórico da sala se ainda não existir
+        if (!chatRooms[room]) {
+            chatRooms[room] = [];
+        }
+
+        // Envia o histórico da sala para o cliente recém-conectado
+        socket.emit('chat history', chatRooms[room]);
     });
 
+    // Evento para sair de uma sala
+    socket.on('leave room', (room) => {
+        socket.leave(room);
+        console.log(`${clients[socket.id].name} left room: ${room}`);
+    });
+
+    // Quando uma mensagem é recebida de um cliente
+    socket.on('message', ({ room, message }) => {
+        const msg = {
+            id: socket.id,
+            name: clients[socket.id].name,
+            message: message,
+            timestamp: new Date().toLocaleTimeString(),
+        };
+
+        // Armazena a mensagem no histórico da sala
+        if (chatRooms[room]) {
+            chatRooms[room].push(msg);
+        } else {
+            chatRooms[room] = [msg];
+        }
+
+        // Enviar a mensagem para todos os clientes na mesma sala
+        io.to(room).emit('message', msg);
+        console.log(`Mensagem enviada para a sala ${room}: ${JSON.stringify(msg)}`);
+    });
+
+    // Quando um cliente se desconecta
     socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
-        clients = clients.filter((client) => client.id !== socket.id);
+        delete clients[socket.id];
     });
 });
 
-// Função para enviar mensagem manualmente do servidor
-const sendServerMessage = (message) => {
+// Função para enviar mensagem manualmente do servidor para uma sala específica
+const sendServerMessageToRoom = (room, message) => {
     const serverMessage = {
         id: 'server',
         name: 'Servidor',
-        message: message
+        message: message,
+        timestamp: new Date().toLocaleTimeString(),
     };
-    io.emit('message', serverMessage);
+    if (chatRooms[room]) {
+        chatRooms[room].push(serverMessage);
+    } else {
+        chatRooms[room] = [serverMessage];
+    }
+    io.to(room).emit('message', serverMessage);
 };
 
-// Exemplo de como enviar uma mensagem manual do servidor
-// sendServerMessage('Esta é uma mensagem manual do servidor');
+// Exemplo de como enviar uma mensagem manual do servidor para uma sala específica
+// sendServerMessageToRoom('Room1', 'Esta é uma mensagem manual do servidor para a Sala 1');
 
 const getIPAddress = () => {
     const interfaces = os.networkInterfaces();
