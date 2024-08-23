@@ -31,7 +31,7 @@ app.get('/messages/:room', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-    console.log(`New client connected: ${socket.id}`);
+    console.log(`Novo Cliente Conectado: ${socket.id}`);
 
     // Adiciona o cliente à lista de clientes conectados
     clients[socket.id] = { id: socket.id, name: `Client ${Object.keys(clients).length + 1}` };
@@ -39,7 +39,7 @@ io.on('connection', (socket) => {
     // Evento para o cliente entrar em uma sala específica
     socket.on('join room', (room) => {
         socket.join(room);
-        console.log(`${clients[socket.id].name} joined room: ${room}`);
+        console.log(`${clients[socket.id].name} Entrou na Sala: ${room}`);
 
         // Inicializa o histórico da sala se ainda não existir
         if (!chatRooms[room]) {
@@ -79,7 +79,7 @@ io.on('connection', (socket) => {
 
     // Quando um cliente se desconecta
     socket.on('disconnect', () => {
-        console.log(`Client disconnected: ${socket.id}`);
+        console.log(`Cliente Desconectado: ${socket.id}`);
         delete clients[socket.id];
     });
 });
@@ -99,9 +99,6 @@ const sendServerMessageToRoom = (room, message) => {
     }
     io.to(room).emit('message', serverMessage);
 };
-
-// Exemplo de como enviar uma mensagem manual do servidor para uma sala específica
-// sendServerMessageToRoom('Room1', 'Esta é uma mensagem manual do servidor para a Sala 1');
 
 const getIPAddress = () => {
     const interfaces = os.networkInterfaces();
