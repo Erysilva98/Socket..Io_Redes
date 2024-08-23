@@ -17,8 +17,7 @@ const Chat: React.FC = () => {
     const [room, setRoom] = useState<string>('Room 1'); // Sala atual
 
     useEffect(() => {
-        // Entrar na sala quando o componente for montado ou quando a sala mudar
-        socket.emit('join room', room);
+        socket.emit('join room', room); // Entrar na sala
 
         // Receber o histórico de mensagens da sala
         socket.on('chat history', (history: Message[]) => {
@@ -42,18 +41,18 @@ const Chat: React.FC = () => {
             socket.off('chat history');
             socket.off('message');
         };
-    }, [room]); // Efeito depende da sala
+    }, [room]);
 
     const sendMessage = () => {
         if (message.trim()) {
             const newMessage: Message = {
-                id: socket.id ?? '',
+                id: socket.id ?? '', // ID do socket
                 name: 'Você',
                 message: message,
                 time: new Date().toLocaleTimeString(),
             };
             socket.emit('message', { ...newMessage, room }); // Enviar mensagem para a sala específica
-            setMessage('');
+            setMessage(''); // Limpar campo de mensagem
         }
     };
 
@@ -88,7 +87,7 @@ const Chat: React.FC = () => {
                     placeholder="Escreva sua mensagem..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()} // Enviar ao pressionar Enter
                 />
                 <button onClick={sendMessage}>Enviar</button>
             </div>

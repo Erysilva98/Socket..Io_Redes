@@ -39,7 +39,7 @@ const Chat: React.FC = () => {
                 name: 'Você', // Nome do remetente
             };
             socket.emit('message', messageData);
-            setInput('');
+            setInput(''); // Limpar o campo de entrada após enviar a mensagem
         }
     };
 
@@ -78,7 +78,8 @@ const Chat: React.FC = () => {
                     <input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        placeholder="Type a message..."
+                        onKeyPress={(e) => e.key === 'Enter' && sendMessage()} // Enviar ao pressionar Enter
+                        placeholder="Escreva sua mensagem..."
                     />
                     <button onClick={sendMessage}>Enviar</button>
                 </div>
